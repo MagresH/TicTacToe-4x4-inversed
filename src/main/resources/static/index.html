@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic-Tac-Toe Game</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .game-row {
+            display: flex;
+        }
+
+        .game-cell {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+<div class="container mt-5">
+    <h1 class="text-center mb-4">Tic-Tac-Toe Game</h1>
+    <div id="game-board" class="d-flex flex-column align-items-center"></div>
+    <div class="text-center mt-4">
+        <button id="new-game" class="btn btn-primary">New Game</button>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
+<script>
+    const BOARD_SIZE = 4;
+    let gameBoard = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(''));
+    document.addEventListener("DOMContentLoaded", () => {
+        document.getElementById("new-game").addEventListener("click", createGameBoard);
+        createGameBoard();
+    });
+
+    // function createGameBoard() {
+    //     let gameBoardElement = document.getElementById("game-board");
+    //     gameBoardElement.innerHTML = "";
+    //
+    //     fetch("http://localhost:8080/start", { method: "POST" })
+    //         .then(response => response.json())
+    //         .then(data => {
+    //             for (let i = 0; i < BOARD_SIZE; i++) {
+    //                 let row = document.createElement("div");
+    //                 row.className = "game-row";
+    //
+    //                 for (let j = 0; j < BOARD_SIZE; j++) {
+    //                     let cell = document.createElement("div");
+    //                     cell.className = "border game-cell m-1";
+    //                     cell.dataset.x = i;
+    //                     cell.dataset.y = j;
+    //
+    //                     cell.addEventListener("click", function () {
+    //                         let x = this.dataset.x;
+    //                         let y = this.dataset.y;
+    //                         if (data.currentPlayer === 1 && data.board[x][y] === '') {
+    //                             data.board[x][y] = 'X';
+    //                             fetch("http://localhost:8080/makeMove", {
+    //                                 method: "POST",
+    //                                 headers: { "Content-Type": "application/json" },
+    //                                 body: JSON.stringify({ x: x, y: y })
+    //                             })
+    //                                 .then(response => response.json())
+    //                                 .then(gameData => {
+    //                                     data = gameData;
+    //                                     updateGameBoard(gameData.board);
+    //                                     if (gameData.status === "FINISHED" && gameData.winner === 2) {
+    //                                         alert("Player X lost!");
+    //                                         resetGame();
+    //                                     } else if (gameData.currentPlayer === 2) {
+    //                                         makeComputerMove();
+    //                                     }
+    //                                 });
+    //                         }
+    //                     });
+    //
+    //                     cell.textContent = data.board[i][j];
+    //
+    //                     row.appendChild(cell);
+    //                 }
+    //                 gameBoardElement.appendChild(row);
+    //             }
+    //         });
+    // }
+    function createGameBoard() {
+        let gameBoardElement = document.getElementById("game-board");
+        gameBoardElement.innerHTML = "";
+
+        fetch("http://localhost:8080/start", { method: "POST" })
+            .then(response => response.json())
+            .then(data => {
+                for (let i = 0; i < BOARD_SIZE; i++) {
+                    let row = document.createElement("div");
+                    row.className = "game-row";
+                    for (let j = 0; j < BOARD_SIZE; j++) {
+                        let cell = document.createElement("div");
+                        cell.className = "border game-cell m-1";
+                        cell.dataset.x = i;
+                        cell.dataset.y = j;
+
+                        cell.addEventListener("click", function () {
+                            let x = this.dataset.x;
+                            let y = this.dataset.y;
+                            if (gameBoard[x][y] === '') {
+
+                                fetch("http://localhost:8080/makeMove", {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ row: x, col: y })
+                                })
+                                    .then(response => response.json())
+                                    .then(gameData => {
+                                        data = gameData;
+                                        gameBoard[x][y] = 'X';
+                                        updateGameBoard(gameData.board.board);
+                                        if (gameData.gameOver === true && gameData.winner === "USER") {
+                                            alert("You won!");
+                                            resetGame();
+                                        } else if (gameData.winner === "COMPUTER") {
+                                            alert("You lost!");
+                                        }
+                                    });
+                            }
+                        });
+
+                        if (data.board.board && data.board.board[i]) {
+                            cell.textContent = data.board.board[i][j];
+                        }
+
+                        row.appendChild(cell);
+                    }
+                    gameBoardElement.appendChild(row);
+                }
+            });
+    }
+
+    function updateGameBoard(board) {
+        for (let i = 0; i < BOARD_SIZE; i++) {
+            for (let j = 0; j < BOARD_SIZE; j++) {
+                let cell = document.querySelector(`[data-x="${i}"][data-y="${j}"]`);
+                cell.textContent = board[i][j];
+            }
+        }
+    }
+
+    function makeComputerMove() {
+        fetch("http://localhost:8080/makeMove", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({})
+        })
+            .then(response => response.json())
+            .then(data => {
+                updateGameBoard(data.board.board);
+                if (data.status === "FINISHED" && data.winner === 1) {
+                    alert("Player O lost!");
+                    resetGame();
+                }
+            });
+    }
+
+    function resetGame() {
+        fetch("http://localhost:8080/reset", { method: "POST" })
+            .then(response => response.json())
+            .then(data => {
+                updateGameBoard(data.board.board);
+            });
+    }
+</script>
+
+</body>
+</html>

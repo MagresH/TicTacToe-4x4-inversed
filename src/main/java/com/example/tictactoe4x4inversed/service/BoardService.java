@@ -1,2 +1,4 @@
-package com.example.tictactoe4x4inversed.service;public class BoardService {
+package com.example.tictactoe4x4inversed.service;
+
+public class BoardService {
 }
