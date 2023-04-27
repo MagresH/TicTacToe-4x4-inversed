@@ -38,60 +38,11 @@
         createGameBoard();
     });
 
-    // function createGameBoard() {
-    //     let gameBoardElement = document.getElementById("game-board");
-    //     gameBoardElement.innerHTML = "";
-    //
-    //     fetch("http://localhost:8080/start", { method: "POST" })
-    //         .then(response => response.json())
-    //         .then(data => {
-    //             for (let i = 0; i < BOARD_SIZE; i++) {
-    //                 let row = document.createElement("div");
-    //                 row.className = "game-row";
-    //
-    //                 for (let j = 0; j < BOARD_SIZE; j++) {
-    //                     let cell = document.createElement("div");
-    //                     cell.className = "border game-cell m-1";
-    //                     cell.dataset.x = i;
-    //                     cell.dataset.y = j;
-    //
-    //                     cell.addEventListener("click", function () {
-    //                         let x = this.dataset.x;
-    //                         let y = this.dataset.y;
-    //                         if (data.currentPlayer === 1 && data.board[x][y] === '') {
-    //                             data.board[x][y] = 'X';
-    //                             fetch("http://localhost:8080/makeMove", {
-    //                                 method: "POST",
-    //                                 headers: { "Content-Type": "application/json" },
-    //                                 body: JSON.stringify({ x: x, y: y })
-    //                             })
-    //                                 .then(response => response.json())
-    //                                 .then(gameData => {
-    //                                     data = gameData;
-    //                                     updateGameBoard(gameData.board);
-    //                                     if (gameData.status === "FINISHED" && gameData.winner === 2) {
-    //                                         alert("Player X lost!");
-    //                                         resetGame();
-    //                                     } else if (gameData.currentPlayer === 2) {
-    //                                         makeComputerMove();
-    //                                     }
-    //                                 });
-    //                         }
-    //                     });
-    //
-    //                     cell.textContent = data.board[i][j];
-    //
-    //                     row.appendChild(cell);
-    //                 }
-    //                 gameBoardElement.appendChild(row);
-    //             }
-    //         });
-    // }
     function createGameBoard() {
         let gameBoardElement = document.getElementById("game-board");
         gameBoardElement.innerHTML = "";
 
-        fetch("http://localhost:8080/start", { method: "POST" })
+        fetch("http://localhost:8080/start?starting-player=USER", { method: "POST" })
             .then(response => response.json())
             .then(data => {
                 for (let i = 0; i < BOARD_SIZE; i++) {
@@ -107,24 +58,25 @@
                             let x = this.dataset.x;
                             let y = this.dataset.y;
                             if (gameBoard[x][y] === '') {
+                                gameBoard[x][y] = 'X';
+                                if (gameBoard[x][y] === 'X'){
+                                    fetch("http://localhost:8080/makeMove", {
+                                        method: "POST",
+                                        headers: { "Content-Type": "application/json" },
+                                        body: JSON.stringify({ row: x, col: y })
+                                    })
+                                        .then(response => response.json())
+                                        .then(gameData => {
+                                            data = gameData;
+                                            updateGameBoard(gameData.board.board);
+                                            if (gameData.gameOver === true && gameData.winner === "USER") {
+                                                alert("You won!");
+                                            } else if (gameData.gameOver === true && gameData.winner === "COMPUTER") {
+                                                alert("You lost!");
+                                            }
+                                        });
+                                }
 
-                                fetch("http://localhost:8080/makeMove", {
-                                    method: "POST",
-                                    headers: { "Content-Type": "application/json" },
-                                    body: JSON.stringify({ row: x, col: y })
-                                })
-                                    .then(response => response.json())
-                                    .then(gameData => {
-                                        data = gameData;
-                                        gameBoard[x][y] = 'X';
-                                        updateGameBoard(gameData.board.board);
-                                        if (gameData.gameOver === true && gameData.winner === "USER") {
-                                            alert("You won!");
-                                            resetGame();
-                                        } else if (gameData.winner === "COMPUTER") {
-                                            alert("You lost!");
-                                        }
-                                    });
                             }
                         });
 
@@ -148,21 +100,7 @@
         }
     }
 
-    function makeComputerMove() {
-        fetch("http://localhost:8080/makeMove", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({})
-        })
-            .then(response => response.json())
-            .then(data => {
-                updateGameBoard(data.board.board);
-                if (data.status === "FINISHED" && data.winner === 1) {
-                    alert("Player O lost!");
-                    resetGame();
-                }
-            });
-    }
+
 
     function resetGame() {
         fetch("http://localhost:8080/reset", { method: "POST" })

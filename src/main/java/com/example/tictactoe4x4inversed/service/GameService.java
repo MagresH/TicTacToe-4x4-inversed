@@ -4,24 +4,30 @@ import com.example.tictactoe4x4inversed.model.Board;
 import com.example.tictactoe4x4inversed.model.Game;
 import com.example.tictactoe4x4inversed.model.Move;
 import com.example.tictactoe4x4inversed.model.Player;
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 
 
 @Service
 public class GameService {
 
-    public Game startGame() {
-        return new Game();
+    public Game startGame(Player startingPlayer) {
+        Game game = new Game();
+        if (startingPlayer == Player.COMPUTER) {
+            Move computerMove = findBestMove(game.getBoard());
+            game.getBoard().makeMove(computerMove);
+        }
+        return game;
     }
 
     public Game makeMove(Game game, Move move) {
         Board board = game.getBoard();
         board.makeMove(move);
         System.out.println(move);
-        if (!board.isGameOver()) {
+        if (!board.isEndPossible()) {
             Move computerMove = findBestMove(board);
             board.makeMove(computerMove);
-            if (board.isGameOver()) board.setWinner(Player.USER);
+            if (board.isEndPossible()) board.setWinner(Player.USER);
         } else {
             board.setWinner(Player.COMPUTER);
         }
@@ -31,11 +37,10 @@ public class GameService {
     public Game makeUserMove(Game game, Move move) {
         Board board = game.getBoard();
         makeMove(game,move);
-        if(board.isGameOver()){
-            Player winner = board.getWinner();
-            game.setWinner(winner);
-            game.setGameOver(true);
 
+        if (board.isGameOver()) {
+            game.setGameOver(true);
+            game.setWinner(board.getWinner());
         }
         return game;
     }
@@ -63,7 +68,7 @@ public class GameService {
 
 
     private int minimax(Board board, int alpha, int beta, boolean maximizing) {
-        if (board.isGameOver()) return board.getScore();
+        if (board.isEndPossible()) return board.getScore();
         int bestScore = maximizing ? Integer.MIN_VALUE : Integer.MAX_VALUE;
 
         for (Move move : board.getPossibleMoves()) {
