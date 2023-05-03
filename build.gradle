@@ -2,6 +2,8 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '3.0.6'
     id 'io.spring.dependency-management' version '1.1.0'
+    id 'application'
+    id 'com.github.johnrengelman.shadow' version '7.1.2'
 }
 
 group = 'com.example'
@@ -33,3 +35,38 @@ dependencies {
 tasks.named('test') {
     useJUnitPlatform()
 }
+application {
+    mainClassName = 'com.example.tictactoe4x4inversed.TicTacToe4x4InversedApplication'
+}
+
+shadowJar {
+    mergeServiceFiles()
+    manifest {
+        attributes 'Main-Class': application.mainClassName
+    }
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': application.mainClassName
+    }
+}
+def javaHome = System.getenv('JAVA_HOME') ?: System.getProperty('java.home')
+
+task jlink(type: Exec) {
+    dependsOn shadowJar
+
+    def outputDir = file("$buildDir/jlink-image")
+    def jreModules = 'java.base,java.logging,java.naming,java.desktop,java.management,java.security.jgss,java.instrument,java.sql'
+
+    commandLine "${javaHome}/bin/jlink", '--no-header-files', '--no-man-pages', '--compress=2', '--strip-debug', '--add-modules', jreModules, '--output', outputDir
+}
+
+jlink.doLast {
+    copy {
+        from file("$buildDir/libs/${project.name}-${project.version}-all.jar")
+        into file("$buildDir/jlink-image")
+        rename { 'app.jar' }
+    }
+}
+

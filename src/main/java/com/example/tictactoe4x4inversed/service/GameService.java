@@ -4,7 +4,6 @@ import com.example.tictactoe4x4inversed.model.Board;
 import com.example.tictactoe4x4inversed.model.Game;
 import com.example.tictactoe4x4inversed.model.Move;
 import com.example.tictactoe4x4inversed.model.Player;
-import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 
 
@@ -23,11 +22,12 @@ public class GameService {
     public Game makeMove(Game game, Move move) {
         Board board = game.getBoard();
         board.makeMove(move);
-        System.out.println(move);
-        if (!board.isEndPossible()) {
+        System.out.println("User move: " + move);
+        if (!board.isGameOverAfterComputerMove()) {
             Move computerMove = findBestMove(board);
             board.makeMove(computerMove);
-            if (board.isEndPossible()) board.setWinner(Player.USER);
+            System.out.println("Computer move: " + computerMove);
+            if (board.isGameOverAfterComputerMove()) board.setWinner(Player.USER);
         } else {
             board.setWinner(Player.COMPUTER);
         }
@@ -41,6 +41,7 @@ public class GameService {
         if (board.isGameOver()) {
             game.setGameOver(true);
             game.setWinner(board.getWinner());
+            System.out.println("Game over, winner is: " + board.getWinner());
         }
         return game;
     }
@@ -68,7 +69,7 @@ public class GameService {
 
 
     private int minimax(Board board, int alpha, int beta, boolean maximizing) {
-        if (board.isEndPossible()) return board.getScore();
+        if (board.isGameOverAfterComputerMove()) return board.getScore();
         int bestScore = maximizing ? Integer.MIN_VALUE : Integer.MAX_VALUE;
 
         for (Move move : board.getPossibleMoves()) {

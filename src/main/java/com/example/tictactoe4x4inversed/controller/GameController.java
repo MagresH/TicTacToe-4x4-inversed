@@ -6,6 +6,7 @@ import com.example.tictactoe4x4inversed.model.Move;
 import com.example.tictactoe4x4inversed.model.Player;
 import com.example.tictactoe4x4inversed.service.GameService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -43,4 +44,5 @@ public class GameController {
         game = gameService.resetGame();
         return ResponseEntity.ok(game);
     }
+
 }
