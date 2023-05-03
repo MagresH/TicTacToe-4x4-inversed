@@ -4,45 +4,62 @@ import com.example.tictactoe4x4inversed.model.Board;
 import com.example.tictactoe4x4inversed.model.Game;
 import com.example.tictactoe4x4inversed.model.Move;
 import com.example.tictactoe4x4inversed.model.Player;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 
 @Service
+@RequiredArgsConstructor
 public class GameService {
 
+    private final BoardService boardService;
+
     public Game startGame(Player startingPlayer) {
+
         Game game = new Game();
+
         if (startingPlayer == Player.COMPUTER) {
             Move computerMove = findBestMove(game.getBoard());
-            game.getBoard().makeMove(computerMove);
+            boardService.makeMove(game.getBoard(), computerMove);
         }
+
         return game;
     }
 
     public Game makeMove(Game game, Move move) {
+
         Board board = game.getBoard();
-        board.makeMove(move);
+        boardService.makeMove(board, move);
+
         System.out.println("User move: " + move);
-        if (!board.isGameOverAfterComputerMove()) {
+
+        if (!boardService.isGameOverAfterComputerMove(board)) {
+
             Move computerMove = findBestMove(board);
-            board.makeMove(computerMove);
+            boardService.makeMove(board, computerMove);
+
             System.out.println("Computer move: " + computerMove);
-            if (board.isGameOverAfterComputerMove()) board.setWinner(Player.USER);
-        } else {
-            board.setWinner(Player.COMPUTER);
-        }
+
+            if (boardService.isGameOverAfterComputerMove(board)) board.setWinner(Player.USER);
+
+        }else board.setWinner(Player.COMPUTER);
+
         game.setBoard(board);
+
         return game;
     }
+
     public Game makeUserMove(Game game, Move move) {
         Board board = game.getBoard();
-        makeMove(game,move);
+        makeMove(game, move);
 
-        if (board.isGameOver()) {
+        if (boardService.isGameOver(board)) {
+
             game.setGameOver(true);
             game.setWinner(board.getWinner());
             System.out.println("Game over, winner is: " + board.getWinner());
         }
+
         return game;
     }
 
@@ -54,10 +71,10 @@ public class GameService {
         int bestScore = Integer.MIN_VALUE;
         Move bestMove = null;
 
-        for (Move move : board.getPossibleMoves()) {
-            board.makeMove(move);
-            int moveScore = minimax(board, Integer.MIN_VALUE, Integer.MAX_VALUE,true);
-            board.undoMove(move);
+        for (Move move : boardService.getPossibleMoves(board)) {
+            boardService.makeMove(board, move);
+            int moveScore = minimax(board, Integer.MIN_VALUE, Integer.MAX_VALUE, true);
+            boardService.undoMove(board, move);
 
             if (moveScore > bestScore) {
                 bestScore = moveScore;
@@ -69,14 +86,14 @@ public class GameService {
 
 
     private int minimax(Board board, int alpha, int beta, boolean maximizing) {
-        if (board.isGameOverAfterComputerMove()) return board.getScore();
+        if (boardService.isGameOverAfterComputerMove(board)) return boardService.getScore(board);
         int bestScore = maximizing ? Integer.MIN_VALUE : Integer.MAX_VALUE;
 
-        for (Move move : board.getPossibleMoves()) {
+        for (Move move : boardService.getPossibleMoves(board)) {
 
-            board.makeMove(move);
+            boardService.makeMove(board, move);
             int moveScore = minimax(board, alpha, beta, !maximizing);
-            board.undoMove(move);
+            boardService.undoMove(board, move);
 
             bestScore = maximizing ? Math.max(bestScore, moveScore) : Math.min(bestScore, moveScore);
 
