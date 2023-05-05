@@ -14,6 +14,9 @@ public class Board  {
     private Player winner;
 
     @JsonIgnore
+    private Player currentPlayer;
+
+    @JsonIgnore
     private int score;
 
     public Board() {

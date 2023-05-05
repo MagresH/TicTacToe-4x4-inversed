@@ -7,6 +7,8 @@ import com.example.tictactoe4x4inversed.model.Player;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.BitSet;
+
 
 @Service
 @RequiredArgsConstructor
@@ -19,9 +21,13 @@ public class GameService {
         Game game = new Game();
 
         if (startingPlayer == Player.COMPUTER) {
+
             Move computerMove = findBestMove(game.getBoard());
+            game.getBoard().setCurrentPlayer(Player.USER);
+
             boardService.makeMove(game.getBoard(), computerMove);
-        }
+
+        } else game.getBoard().setCurrentPlayer(Player.COMPUTER);
 
         return game;
     }
@@ -31,18 +37,16 @@ public class GameService {
         Board board = game.getBoard();
         boardService.makeMove(board, move);
 
-        System.out.println("User move: " + move);
-
-        if (!boardService.isGameOverAfterComputerMove(board)) {
+        if (!boardService.isGameOver(board)) {
 
             Move computerMove = findBestMove(board);
             boardService.makeMove(board, computerMove);
 
             System.out.println("Computer move: " + computerMove);
 
-            if (boardService.isGameOverAfterComputerMove(board)) board.setWinner(Player.USER);
+            if (boardService.isGameOver(board)) game.setWinner(Player.USER);
 
-        }else board.setWinner(Player.COMPUTER);
+        } else game.setWinner(Player.COMPUTER);
 
         game.setBoard(board);
 
@@ -50,7 +54,10 @@ public class GameService {
     }
 
     public Game makeUserMove(Game game, Move move) {
+        if (game.isGameOver()) return game;
         Board board = game.getBoard();
+
+        System.out.println("User move: " + move);
         makeMove(game, move);
 
         if (boardService.isGameOver(board)) {
@@ -81,12 +88,13 @@ public class GameService {
                 bestMove = move;
             }
         }
+
         return bestMove;
     }
 
 
     private int minimax(Board board, int alpha, int beta, boolean maximizing) {
-        if (boardService.isGameOverAfterComputerMove(board)) return boardService.getScore(board);
+        if (boardService.isGameOver(board)) return boardService.getScore(board);
         int bestScore = maximizing ? Integer.MIN_VALUE : Integer.MAX_VALUE;
 
         for (Move move : boardService.getPossibleMoves(board)) {
